@@ -1,0 +1,31 @@
+services:
+  codeigniter-dev-environment:
+    container_name: codeigniter_dev_environment
+    ports:
+      - 8000:80
+    build: .
+    volumes:
+      - ./src:/var/www/html
+    networks:
+      - codeigniter_dev_environment_network
+
+  codeigniter-dev-environment-database:
+    image: mariadb:10.6.20-focal
+    container_name: codeigniter_dev_environment_database
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - 8100:3306
+    volumes:
+      - ./init/:/docker-entrypoint-initdb.d/
+      - ./db:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 1234
+      MYSQL_DATABASE: codeigniter
+    networks:
+      - codeigniter_dev_environment_network
+
+networks:
+  codeigniter_dev_environment_network:
+    name: codeigniter_dev_environment_network
+    driver: bridge
+    external: true

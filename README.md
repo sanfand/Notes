@@ -2,7 +2,7 @@ This repository contains a Docker Compose file for setting up a basic and functi
 
 1. Clone the repository:
 ```bash
-git clone [https://github.com/nasserman/basic-php-development-docker.git](https://github.com/nasserman/basic-codeigniter-development-docker.git)
+git clone https://github.com/nasserman/basic-php-development-docker.git
 ```
 
 2. Rename the cloned directory to a new name:

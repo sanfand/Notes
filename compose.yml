@@ -26,6 +26,5 @@ services:
 
 networks:
   codeigniter_dev_environment_network:
-    name: codeigniter_dev_environment_network
-    driver: bridge
     external: true
+

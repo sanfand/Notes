@@ -50,5 +50,48 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 |		my-controller/my-method	-> my_controller/my_method
 */
 $route['default_controller'] = 'welcome';
+// $route['404_override'] = '';
+// $route['translate_uri_dashes'] = FALSE;
+
+// friendly shortcuts (optional)
+// $route['login'] = 'auth/login';
+// $route['register'] = 'auth/register';
+// $route['logout'] = 'auth/logout';
+// $route['notes/(:any)'] = 'notes/$1';
+$route['migrate'] = 'migrate/index';
+$route['migrate/(:num)'] = 'migrate/index/$1';
+
+
+
+
+
+defined('BASEPATH') OR exit('No direct script access allowed');
+
+$route['default_controller'] = 'auth/login';
+$route['404_override'] = '';
+$route['translate_uri_dashes'] = FALSE;
+
+// Auth
+$route['login'] = 'auth/login';
+$route['register'] = 'auth/register';
+$route['logout'] = 'auth/logout';
+
+// Notes
+$route['profile'] = 'notes/profile';
+$route['public']  = 'notes/public';
+
+// AJAX / API endpoints (optional nicer URIs)
+$route['notes/fetch_user']   = 'notes/fetch_user';
+$route['notes/fetch_public'] = 'notes/fetch_public';
+$route['notes/add']          = 'notes/add';
+$route['notes/edit']         = 'notes/edit';
+$route['notes/delete']       = 'notes/delete';
+
+
+/*
+|--------------------------------------------------------------------------
+| 404 Override & Translate URI Dashes
+|--------------------------------------------------------------------------
+*/
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;

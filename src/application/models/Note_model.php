@@ -2,55 +2,50 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Note_model extends CI_Model {
-
-    public function __construct() {
+    private $table = 'notes';
+    public function __construct(){
         parent::__construct();
         $this->load->database();
     }
 
+    public function get_user_notes($user_id, $limit=5, $offset=0) {
+        return $this->db->where('user_id', $user_id)
+                        ->order_by('created_at', 'DESC')
+                        ->get($this->table, $limit, $offset)
+                        ->result();
+    }
+
+    public function count_user_notes($user_id) {
+        return $this->db->where('user_id', $user_id)->count_all_results($this->table);
+    }
+
+    public function get_public_notes($limit=5, $offset=0) {
+        $this->db->select('notes.*, users.username')
+                 ->from('notes')
+                 ->join('users', 'users.id = notes.user_id', 'left')
+                 ->where('is_public', 1)
+                 ->order_by('created_at', 'DESC')
+                 ->limit($limit, $offset);
+        return $this->db->get()->result();
+    }
+
+    public function count_public_notes() {
+        return $this->db->where('is_public', 1)->count_all_results($this->table);
+    }
+
     public function add($data) {
-        return $this->db->insert('notes', $data);
+        return $this->db->insert($this->table, $data);
     }
 
-    public function edit($id, $data, $user_id) {
-        return $this->db->where(['id'=>$id, 'user_id'=>$user_id])->update('notes', $data);
+    public function get_by_id($id) {
+        return $this->db->get_where($this->table, ['id'=> $id])->row();
     }
 
-    public function delete($id, $user_id) {
-        return $this->db->where(['id'=>$id, 'user_id'=>$user_id])->delete('notes');
+    public function update($id, $data) {
+        return $this->db->where('id', $id)->update($this->table, $data);
     }
 
-    public function get_user_notes($user_id, $page=1, $limit=5) {
-        $offset = ($page - 1) * $limit;
-        $this->db->select('notes.*, users.username');
-        $this->db->from('notes');
-        $this->db->join('users','users.id=notes.user_id','left');
-        $this->db->where('notes.user_id', $user_id);
-        $this->db->order_by('created_at', 'DESC');
-        $query = $this->db->get('', $limit, $offset);
-        $notes = $query->result();
-
-        $this->db->where('user_id', $user_id);
-        $count = $this->db->count_all_results('notes');
-        $total_pages = $limit ? (int) ceil($count / $limit) : 1;
-
-        return ['notes' => $notes, 'total_pages' => $total_pages];
-    }
-
-    public function get_public_notes($page=1, $limit=5) {
-        $offset = ($page - 1) * $limit;
-        $this->db->select('notes.*, users.username');
-        $this->db->from('notes');
-        $this->db->join('users','users.id=notes.user_id','left');
-        $this->db->where('is_public', 1);
-        $this->db->order_by('created_at', 'DESC');
-        $query = $this->db->get('', $limit, $offset);
-        $notes = $query->result();
-
-        $this->db->where('is_public', 1);
-        $count = $this->db->count_all_results('notes');
-        $total_pages = $limit ? (int) ceil($count / $limit) : 1;
-
-        return ['notes' => $notes, 'total_pages' => $total_pages];
+    public function delete($id) {
+        return $this->db->where('id', $id)->delete($this->table);
     }
 }

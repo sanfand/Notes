@@ -8,12 +8,12 @@ class Home extends CI_Controller {
     }
 
     public function index() {
-        // If logged in, show profile page (as before "My Notes" is considered the homepage)
+        // If logged in, show profile page 
         if ($this->session->userdata('user_id')) {
             $this->load->view('frontend/profile');
             return;
         }
-        // Not logged — public landing page (index.html)
+        // Not logged — public landing page 
         $this->load->view('frontend/index');
     }
 }

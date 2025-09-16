@@ -2,106 +2,81 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 class Auth extends CI_Controller {
+
     public function __construct() {
         parent::__construct();
         $this->load->model('User_model');
-        // session & db autoloaded via autoload.php
-        $this->load->helper('url');
+        $this->load->library('session');
+        $this->load->helper(['url', 'form']);
     }
 
-    public function index() {
-        if ($this->session->userdata('user_id')) redirect('profile');
-        redirect('login');
-    }
-
-    // show login view
     public function login() {
-        if ($this->session->userdata('user_id')) redirect('profile');
-        $this->load->view('login');
-    }
+        if ($this->input->method() === 'post') {
+            $username = $this->input->post('username');
+            $password = $this->input->post('password');
 
-    // AJAX: perform login
-    public function do_login() {
-        if ($this->input->method() !== 'post') {
-            return $this->output->set_status_header(405);
-        }
+            $username = $username ? htmlspecialchars($username, ENT_QUOTES, 'UTF-8') : '';
+            $password = $password ? htmlspecialchars($password, ENT_QUOTES, 'UTF-8') : '';
 
-        // var_dump(password_hash('1234f', PASSWORD_DEFAULT));
-        $username = $this->input->post('username', TRUE);
-        $password = $this->input->post('password', TRUE);
+            if (empty($username) || empty($password)) {
+                $this->session->set_flashdata('error', 'Username and password are required.');
+                redirect('auth/login');
+                return;
+            }
 
-        $user = $this->User_model->get_by_username_or_email($username);
-        // var_dump(password_verify($password, $user->password));
+            $user = $this->User_model->get_user_by_username($username);
 
-        $response = ['status'=>'error','message'=>'Invalid username/email or password.'];
-
-        if ($user) {
-            if (password_verify($password, $user->password)) {
+            if ($user && password_verify($password, $user->password)) {
                 $this->session->set_userdata([
                     'user_id'   => $user->id,
                     'username'  => $user->username,
-                    'email'     => $user->email,
+                    
                 ]);
-                $response = ['status'=>'success','message'=>'Login successful'];
+                redirect('profile');
             } else {
-                // optional fallback for legacy MD5 users:
-                // if ($user->password === md5($password)) {
-                //     $this->User_model->update_password($user->id, password_hash($password, PASSWORD_DEFAULT));
-                //     // set session...
-                // }
+                $this->session->set_flashdata('error', 'Invalid username or password.');
+                redirect('auth/login');
             }
-        }
-
-        return $this->output
-            ->set_content_type('application/json')
-            ->set_output(json_encode($response));
-    }
-
-    // show register view
-    public function register() {
-        if ($this->session->userdata('user_id')) redirect('profile');
-        $this->load->view('register');
-    }
-
-    // AJAX: perform register
-    public function do_register() {
-        if ($this->input->method() !== 'post') {
-            return $this->output->set_status_header(405);
-        }
-
-        $username = $this->input->post('username', TRUE);
-        $email    = $this->input->post('email', TRUE);
-        $password = $this->input->post('password', TRUE);
-
-        // Basic validation 
-        if (!$username || !$email || !$password) {
-            return $this->output->set_content_type('application/json')->set_output(json_encode(['status'=>'error','message'=>'Please fill all fields']));
-        }
-
-        // prevent duplicates
-        if ($this->User_model->get_by_username_or_email($username) || $this->User_model->get_by_username_or_email($email)) {
-            return $this->output->set_content_type('application/json')->set_output(json_encode(['status'=>'error','message'=>'Username or email already exists']));
-        }
-
-        $data = [
-            'username'   => $username,
-            'email'      => $email,
-            'password'   => password_hash($password, PASSWORD_DEFAULT),
-        ];
-
-        $insert_id = $this->User_model->insert($data);
-
-        if ($insert_id) {
-            $response = ['status'=>'success','message'=>'Registration successful'];
         } else {
-            $response = ['status'=>'error','message'=>'Registration failed'];
+            $this->load->view('login'); 
         }
+    }
 
-        return $this->output->set_content_type('application/json')->set_output(json_encode($response));
+    public function register() {
+        if ($this->input->method() === 'post') {
+            $username = $this->input->post('username');
+            $email    = $this->input->post('email');
+            $password = $this->input->post('password');
+
+            if ($this->User_model->username_exists($username)) {
+                $this->session->set_flashdata('error', 'Username already exists.');
+                redirect('auth/register');
+                return;
+            }
+
+            if ($this->User_model->email_exists($email)) {
+                $this->session->set_flashdata('error', 'Email already exists.');
+                redirect('auth/register');
+                return;
+            }
+
+            $hash = password_hash($password, PASSWORD_BCRYPT);
+
+            $this->User_model->insert_user([
+                'username' => $username,
+                'email'    => $email,
+                'password' => $hash
+            ]);
+
+            $this->session->set_flashdata('success', 'Registration successful. You can login now.');
+            redirect('auth/login');
+        } else {
+            $this->load->view('register'); 
+        }
     }
 
     public function logout() {
         $this->session->sess_destroy();
-        redirect('login');
+        redirect('auth/login');
     }
 }
